@@ -4,6 +4,9 @@ A script that sends hotkeys for the purpose of controlling an external media pla
 Inspired as an expanded version of S's [GTA Radio External](https://github.com/lotsofs/GTA-Radio-External).
 Currently only supports GTA III and Vice City (all international releases plus Vice City Japanese). San Andreas support is coming soon(tm), and I imagine this can be done to support other GTA games as well. Report issues here in GitHub or by @ing me where I can be @ed. (Twitter @srlMhmd, Discord Mhmd_FVC#8760)
 
+## Download
+[v1](https://github.com/MhmdFVC/GTARadioPlayer/releases/download/v1/GTARadioPlayer_v1.zip) 2021/5/2
+
 ## Rundown
 Basically, it reads memory values off of certain addresses that can be used to determine whether music should be playing, paused, muted, or unmuted.
 It mutes when on foot, in certain buildings, when the menu is open, or when a mission is passed (need to find workaround for mission pass). It pauses while playing a replay. In vehicles and the sound config menu, music will play. This does not work with GTA III's ambulance, firetruck, Mr. Whoopee, or other vehicles with no radio/chatter, unfortunately.
