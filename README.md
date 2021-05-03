@@ -9,6 +9,7 @@ Currently only supports GTA III and Vice City (all international releases plus V
 
 ## Getting Started
 **(! This program currently won't work properly on players without versatile global hotkey support !)** (sorry)
+
 Extract the zip file somewhere. I'd recommend you make a shortcut, because those WAV files and config file aren't going to be nice to go through each time. After that, just launch the program and follow the steps outlined in the ? dialog by the keybinds, and check START when you're ready to go. Further reading is below.
 
 ## Rundown
