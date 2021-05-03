@@ -5,7 +5,7 @@ OnExit, GuiClose
 ; READ CONFIG
 IniRead, ToggleMute, config.ini, Keybinds, ToggleMute, %A_Space%
 IniRead, TogglePause, config.ini, Keybinds, TogglePause, %A_Space%
-IniRead, ToggleDisable, config.ini, Keybinds, ToggleDisable,F20
+IniRead, ToggleDisable, config.ini, Keybinds, ToggleDisable,%A_Space%
 ;IniRead, VolumeUp, config.ini, Keybinds, VolumeUp, %A_Space%
 ;IniRead, VolumeDown, config.ini, Keybinds, VolumeDown, %A_Space%
 IniRead, PlayMissionPassed, config.ini, Behavior, PlayMissionPassed, 1
@@ -61,7 +61,8 @@ MissionPassedPlaying = 0
 ;DialoguePlaying = 0
 
 Disabled = 0
-Hotkey, %ToggleDisable%, ToggleDisableProg
+If (ToggleDisable)
+	Hotkey, %ToggleDisable%, ToggleDisableProg
 
 ; GUI setup
 Gui, Add, Text, x5 y5 w120 vVer, Game:
