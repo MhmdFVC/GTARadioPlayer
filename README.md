@@ -19,3 +19,6 @@ If you check this option, the program will play miscom3.wav or miscomVC.wav upon
 
 ## On/Off
 This lets you configure a keybind that completely disables functionality while the program is started (you'll need to restart the program once you've bound a new key). I made this as a workaround for weird issues when trying to stop playback during Trial by Dirt duping in Vice City 100% speedruns, but you may find it useful in other situations as well. It only changes state when your game is open.
+
+## Config file
+Upon changing any keybinds, a config.ini file will be created to store your settings. If you bind any "strange" keys (F13-24 using AHK, Media_Play_Pause, etc.), they will not appear properly in the program, but they will still work. They also appear properly in the config file, so you can check them there if necessary. The Mission Passed theme setting and the state of the program on exit are also stored (e.g., if you close the program while START is checked, it will automatically be ready to go when you launch it the next time).
