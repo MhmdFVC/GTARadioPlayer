@@ -7,6 +7,10 @@ Currently only supports GTA III and Vice City (all international releases plus V
 ## Download
 [v1](https://github.com/MhmdFVC/GTARadioPlayer/releases/download/v1/GTARadioPlayer_v1.zip) 2021/5/2
 
+## Getting Started
+**(! This program currently won't work properly on players without versatile global hotkey support !)** (sorry)
+Extract the zip file somewhere. I'd recommend you make a shortcut, because those WAV files and config file aren't going to be nice to go through each time. After that, just launch the program and follow the steps outlined in the ? dialog by the keybinds, and check START when you're ready to go. Further reading is below.
+
 ## Rundown
 Basically, it reads memory values off of certain addresses that can be used to determine whether music should be playing, paused, muted, or unmuted.
 It mutes when on foot, in certain buildings, when the menu is open, or when a mission is passed (need to find workaround for mission pass). It pauses while playing a replay. In vehicles and the sound config menu, music will play. This does not work with GTA III's ambulance, firetruck, Mr. Whoopee, or other vehicles with no radio/chatter, unfortunately.
