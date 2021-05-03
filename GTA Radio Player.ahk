@@ -5,7 +5,7 @@ OnExit, GuiClose
 ; READ CONFIG
 IniRead, ToggleMute, config.ini, Keybinds, ToggleMute, %A_Space%
 IniRead, TogglePause, config.ini, Keybinds, TogglePause, %A_Space%
-IniRead, ToggleDisable, config.ini, Keybinds, ToggleDisable,F12
+IniRead, ToggleDisable, config.ini, Keybinds, ToggleDisable,F20
 ;IniRead, VolumeUp, config.ini, Keybinds, VolumeUp, %A_Space%
 ;IniRead, VolumeDown, config.ini, Keybinds, VolumeDown, %A_Space%
 IniRead, PlayMissionPassed, config.ini, Behavior, PlayMissionPassed, 1
@@ -318,7 +318,7 @@ While (StartProg) {
 				Send {Blind}{%ToggleMute%}
 			if (!PlayerPaused)
 				Send {Blind}{%TogglePause%}
-			While (Disabled)
+			While (Disabled && StartProg)
 				sleep 100
 			if (MusicAudible)
 				Send {Blind}{%ToggleMute%}
@@ -378,7 +378,7 @@ While (StartProg) {
 				Send {Blind}{%ToggleMute%}
 			if (!PlayerPaused)
 				Send {Blind}{%TogglePause%}
-			While (Disabled)
+			While (Disabled && StartProg)
 				sleep 100
 			if (MusicAudible)
 				Send {Blind}{%ToggleMute%}
