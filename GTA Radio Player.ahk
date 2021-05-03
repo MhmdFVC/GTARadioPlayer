@@ -1,11 +1,11 @@
 #SingleInstance,force
 SendMode Input
-OnExit, guiclose
+OnExit, GuiClose
 
 ; READ CONFIG
 IniRead, ToggleMute, config.ini, Keybinds, ToggleMute, %A_Space%
 IniRead, TogglePause, config.ini, Keybinds, TogglePause, %A_Space%
-IniRead, ToggleDisable, config.ini, Keybinds, ToggleDisable,^!F12
+IniRead, ToggleDisable, config.ini, Keybinds, ToggleDisable,F12
 ;IniRead, VolumeUp, config.ini, Keybinds, VolumeUp, %A_Space%
 ;IniRead, VolumeDown, config.ini, Keybinds, VolumeDown, %A_Space%
 IniRead, PlayMissionPassed, config.ini, Behavior, PlayMissionPassed, 1
