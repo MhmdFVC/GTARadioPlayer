@@ -429,6 +429,9 @@ GuiControl,Disable,M
 GuiControl,Disable,Kbch
 GuiControl,Disable,Fh
 GuiControl,Disable,Td
+GuiControl,Disable,SettingsButton
+GuiControl,Disable,MusicPlayer
+GuiControl,Disable,MuteMethod
 Disabled = 0
 GuiControl,-c +cGreen,OnOff
 GuiControl,Text,OnOff,ON
@@ -779,6 +782,9 @@ GuiControl,Enable,M
 GuiControl,Enable,Fh
 GuiControl,Enable,Kbch
 GuiControl,Enable,Td
+GuiControl,Enable,SettingsButton
+GuiControl,Enable,MusicPlayer
+GuiControl,Enable,MuteMethod
 GuiControl,Hide,OnOff
 GuiControl,Text,Ver,Game:
 IniWrite, %StartProg%, config.ini, Behavior, StartProg
