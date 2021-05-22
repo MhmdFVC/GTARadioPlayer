@@ -19,7 +19,7 @@ IniRead, StartProg, config.ini, Behavior, StartProg, 0
 IniRead, FoobarPort, config.ini, Foobar, Port, 8880
 IniRead, WinampPassword, config.ini, Winamp, Password, %A_Space%
 IniRead, WinampPort, config.ini, Winamp, Port, 4800
-IniRead, MuteMethod, config.ini, Behavior, MuteMethod, Media Keys
+IniRead, MuteMethod, config.ini, Behavior, MuteMethod, Classic Keybinds
 IniRead, MusicPlayer, config.ini, Player, MusicPlayer, foobar2000
 
 ReadMemory(MADDRESS,PROGRAM) ; copied from https://autohotkey.com/board/topic/33888-readmemory-function/
@@ -137,7 +137,7 @@ Gui, Add, Hotkey, x100 y162 w110 vToggleDisable gUpdate, %ToggleDisable%
 ;GuiControl,Disable,fkey
 ;GuiControl,Disable,fbindon
 Gui, Add, Text, x2 y189 w80 h40 , Player muting method:
-Gui, Add, DropDownList, x82 y192 w95 h81 vMuteMethod gUpdate, Media Keys|HTTP Request
+Gui, Add, DropDownList, x82 y192 w95 h81 vMuteMethod gUpdate, Classic Keybinds|HTTP Request
 Gui, Add, Button, x185 y189 w80 h30 vSettingsButton gShowSettings, Player-specific settings
 Gui, Add, Text, x2 y229 w100 h40 , Music player:`n(for HTTP Request)
 Gui, Add, DropDownList, x102 y232 w150 h80 vMusicPlayer gUpdate, foobar2000|Winamp|Spotify
@@ -167,7 +167,7 @@ GuiControl, Choose, MuteMethod, %MuteMethod%
 GuiControl, Choose, MusicPlayer, %MusicPlayer%
 
 ; Disable not needed UI elements (and set up Spotify instance if needed)
-if (MuteMethod = "Media Keys") 
+if (MuteMethod = "Classic Keybinds") 
 {
 	GuiControl, Disable, SettingsButton
 	GuiControl, Enable, ToggleMute
@@ -329,7 +329,7 @@ Update:
 	IniWrite, %StartProg%, config.ini, Behavior, StartProg
 	IniWrite, %MuteMethod%, config.ini, Behavior, MuteMethod
 	IniWrite, %MusicPlayer%, config.ini, Player, MusicPlayer
-	if (MuteMethod = "Media Keys") 
+	if (MuteMethod = "Classic Keybinds") 
 	{
 		GuiControl, Disable, SettingsButton
 		GuiControl, Disable, MusicPlayer
@@ -380,7 +380,7 @@ BindHelp:
 GuiClose:
 	if (!MusicAudible)
 	{
-		if (MuteMethod = "Media Keys")
+		if (MuteMethod = "Classic Keybinds")
 		{
 			Send {Blind}{%ToggleMute%}
 			
@@ -394,7 +394,7 @@ GuiClose:
 
 	if (PlayerPaused)
 	{
-		if (MuteMethod = "Media Keys")
+		if (MuteMethod = "Classic Keybinds")
 		{
 			Send {Blind}{%TogglePause%}
 			
@@ -505,7 +505,7 @@ While (StartProg) {
 		
 		if (RadioStatus = 50629 || RadioStatus = 197) { ; menu
 			if (MusicAudible) { ; mute in menu
-				if (MuteMethod = "Media Keys")
+				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%ToggleMute%}
 					
@@ -522,7 +522,7 @@ While (StartProg) {
 			}
 		} else if ((RadioStatus = 2827 || RadioStatus = 3084 || RadioStatus = 11 || RadioStatus = 12) || (RadioStatus = 93 || RadioStatus = 116061 || RadioStatus = 453)) { ; mute while on foot/mission passed
 			if (MusicAudible) {
-				if (MuteMethod = "Media Keys")
+				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%ToggleMute%}
 					
@@ -540,7 +540,7 @@ While (StartProg) {
 		} else if (((RadioStatus >= 0 && RadioStatus <= 10) || RadioStatus = 257 || RadioStatus = 514 || RadioStatus =  771
 				|| RadioStatus = 1028 || RadioStatus = 1285 || RadioStatus = 1542 || RadioStatus = 1799 || RadioStatus = 2313
 				|| RadioStatus = 2056 || RadioStatus = 2570) && WinExist(gta3) && !MusicAudible) { ; play music in vehicle 
-			if (MuteMethod = "Media Keys")
+			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%ToggleMute%}
 			}
@@ -552,7 +552,7 @@ While (StartProg) {
 		}
 		
 		if (ReplayStatus = 0 && WinExist(gta3) && !PlayerPaused) { ; if replay playing and game is open (would assume it's =0 if the game isn't open)
-			if (MuteMethod = "Media Keys")
+			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%TogglePause%}
 			}
@@ -562,7 +562,7 @@ While (StartProg) {
 			}
 			PlayerPaused = 1
 		} else if (ReplayStatus = 19 && PlayerPaused) { ; unpause after replay is over
-			if (MuteMethod = "Media Keys")
+			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%TogglePause%}
 				
@@ -588,7 +588,7 @@ While (StartProg) {
 			GuiControl,-c +cRed,OnOff
 			GuiControl,Text,OnOff,OFF
 			if (MusicAudible)
-				if (MuteMethod = "Media Keys")
+				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%ToggleMute%}
 					
@@ -598,7 +598,7 @@ While (StartProg) {
 					Gosub, MuteHTTP
 				}
 			if (!PlayerPaused)
-				if (MuteMethod = "Media Keys")
+				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%TogglePause%}
 					
@@ -610,7 +610,7 @@ While (StartProg) {
 			While (Disabled && StartProg)
 				sleep 100
 			if (MusicAudible)
-				if (MuteMethod = "Media Keys")
+				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%ToggleMute%}
 					
@@ -620,7 +620,7 @@ While (StartProg) {
 					Gosub, MuteHTTP
 				}
 			if (!PlayerPaused)
-				if (MuteMethod = "Media Keys")
+				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%TogglePause%}
 					
@@ -647,7 +647,7 @@ While (StartProg) {
 		
 		if (RadioStatus = 1225) { ; menu or replay
 			if (MusicAudible) { ; mute in menu
-				if (MuteMethod = "Media Keys")
+				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%ToggleMute%}
 					
@@ -669,7 +669,7 @@ While (StartProg) {
 		} else if (RadioStatus != 101 && MissionPassedPlaying) ; reset missionpassedplaying var if it's done playing
 			MissionPassedPlaying = 0
 		else if ((RadioStatus = 10 || RadioStatus = 11 || RadioStatus = 16 || RadioStatus = 21 || RadioStatus = 22) && MusicAudible) { 
-			if (MuteMethod = "Media Keys")
+			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%ToggleMute%}
 			}
@@ -679,7 +679,7 @@ While (StartProg) {
 			}
 			MusicAudible = 0
 		} else if (((RadioStatus >= 0 && RadioStatus <= 9) || (RadioStatus >= 23 && RadioStatus <= 26)) && WinExist(gta3) && !MusicAudible) { ; play music in vehicle 
-			if (MuteMethod = "Media Keys")
+			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%ToggleMute%}
 				
@@ -692,7 +692,7 @@ While (StartProg) {
 		}
 		
 		if ((ReplayStatus = 1 || ReplayStatus = 65537) && WinExist(gta3) && !PlayerPaused) { ; if replay playing and game is open (would assume it's =0 if the game isn't open)
-			if (MuteMethod = "Media Keys")
+			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%TogglePause%}
 			}
@@ -702,7 +702,7 @@ While (StartProg) {
 			}
 			PlayerPaused = 1
 		} else if ((ReplayStatus = 0 || ReplayStatus = 65536) && PlayerPaused) { ; unpause after replay is over
-			if (MuteMethod = "Media Keys")
+			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%TogglePause%}
 			}
@@ -751,7 +751,7 @@ While (StartProg) {
 			Send {Blind}{%ToggleMute%}
 			MusicAudible = 1
 		} else if (PlayerPaused) {
-			if (MuteMethod = "Media Keys")
+			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%TogglePause%}
 			}
