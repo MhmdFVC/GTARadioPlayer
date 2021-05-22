@@ -65,14 +65,20 @@ if (MuteMethod = "HTTP Request")
 			whr.Open("POST", get_url, true)
 			whr.Send()
 			whr.WaitForResponse()
-			WinampVolume := whr.ResponseText
+			CurrentVolume := whr.ResponseText
+			if (CurrentVolume != 0) {
+				WinampVolume := CurrentVolume
+			}
 		}
 
 	}
 	else if (MusicPlayer = "Spotify")
 	{
 		global SpotifyAPI := new Spotify
-		SpotifyVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
+		CurrentVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
+		if (CurrentVolume != 0) {
+			SpotifyVolume := CurrentVolume
+		}
 	}
 }
 
@@ -234,7 +240,10 @@ MuteHTTP:
 		whr.Open("POST", get_url, true)
 		whr.Send()
 		whr.WaitForResponse()
-		WinampVolume := whr.ResponseText
+		CurrentVolume := whr.ResponseText
+		if (CurrentVolume != 0) {
+			WinampVolume := CurrentVolume
+		}
 		url = http://localhost:%WinampPort%/setvolume?p=%WinampPassword%&level=0
 		whr.Open("POST", url, true)
 		whr.Send()
@@ -242,7 +251,10 @@ MuteHTTP:
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		SpotifyVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
+		CurrentVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
+		if (CurrentVolume != 0) {
+			SpotifyVolume := CurrentVolume
+		}
 		SpotifyAPI.Player.SetVolume(0)
 	}
 	return
