@@ -1,6 +1,8 @@
 #SingleInstance,force
+#Include Spotify.ahk
 SendMode Input
 OnExit, GuiClose
+
 
 ; READ CONFIG
 IniRead, ToggleMute, config.ini, Keybinds, ToggleMute, %A_Space%
@@ -49,17 +51,28 @@ ReadMemory(MADDRESS,PROGRAM) ; copied from https://autohotkey.com/board/topic/33
 ; Initialization
 MusicAudible = 1 ; start with your player unmuted
 PlayerPaused = 0 ; start with player unpaused/playing
-WinampVolume = 0 ; httpQ doesn't have a mute/unmute toggle like beefweb so need to get current volume level first and store it for later (also updated on every mute just in case) 
+WinampVolume := 0 ; httpQ doesn't have a mute/unmute toggle like beefweb so need to get current volume level first and store it for later (also updated on every mute just in case)
+SpotifyVolume := 0 ; no mute/unmute toggle like beefweb, so going the winamp route 
+
 if (MuteMethod = "HTTP Request")
 {
 	if (MusicPlayer = "Winamp")
 	{
-		whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-		get_url = http://localhost:%WinampPort%/getvolume?p=%WinampPassword%
-		whr.Open("POST", get_url, true)
-		whr.Send()
-		whr.WaitForResponse()
-		WinampVolume := whr.ResponseText
+		if (WinExist("ahk_exe winamp.exe")) ; check if winamp is actually running to not error out
+		{
+			whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+			get_url = http://localhost:%WinampPort%/getvolume?p=%WinampPassword%
+			whr.Open("POST", get_url, true)
+			whr.Send()
+			whr.WaitForResponse()
+			WinampVolume := whr.ResponseText
+		}
+
+	}
+	else if (MusicPlayer = "Spotify")
+	{
+		global SpotifyAPI := new Spotify
+		SpotifyVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
 	}
 }
 
@@ -127,7 +140,7 @@ Gui, Add, Text, x2 y189 w80 h40 , Player muting method:
 Gui, Add, DropDownList, x82 y192 w95 h81 vMuteMethod gUpdate, Media Keys|HTTP Request
 Gui, Add, Button, x185 y189 w80 h30 vSettingsButton gShowSettings, Player-specific settings
 Gui, Add, Text, x2 y229 w100 h40 , Music player:`n(for HTTP Request)
-Gui, Add, DropDownList, x102 y232 w150 h80 vMusicPlayer gUpdate, foobar2000|Winamp
+Gui, Add, DropDownList, x102 y232 w150 h80 vMusicPlayer gUpdate, foobar2000|Winamp|Spotify
 
 ; Foobar settings GUI setup (didn't find anywhere in the API documentation how to even use the auth details so I'll just comment it all out for now)
 Gui, FoobarSettings:Add, Text, x12 y29 w30 h20 +Right +Center, Port:
@@ -153,7 +166,7 @@ Gui, WinampSettings:Add, Link, x70 y9 w380 h20, This feature requires the <a hre
 GuiControl, Choose, MuteMethod, %MuteMethod%
 GuiControl, Choose, MusicPlayer, %MusicPlayer%
 
-; Disable not needed UI elements
+; Disable not needed UI elements (and set up Spotify instance if needed)
 if (MuteMethod = "Media Keys") 
 {
 	GuiControl, Disable, SettingsButton
@@ -164,7 +177,14 @@ else if (MuteMethod = "HTTP Request")
 {
 	GuiControl, Disable, ToggleMute
 	GuiControl, Disable, TogglePause
-	GuiControl, Enable, SettingsButton
+	if (MusicPlayer = "Spotify")
+	{
+		GuiControl, Disable, SettingsButton
+	}
+	else
+	{
+		GuiControl, Enable, SettingsButton
+	}
 }
 
 
@@ -202,7 +222,6 @@ MuteHTTP:
 	whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
 	if (MusicPlayer = "foobar2000") 
 	{
-
 		url = http://localhost:%FoobarPort%/api/player?isMuted=true
 		whr.Open("POST", url, true)
 		whr.SetRequestHeader("Accept", "application/json")
@@ -220,6 +239,11 @@ MuteHTTP:
 		whr.Open("POST", url, true)
 		whr.Send()
 		whr.WaitForResponse()
+	}
+	else if (MusicPlayer = "Spotify")
+	{
+		SpotifyVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
+		SpotifyAPI.Player.SetVolume(0)
 	}
 	return
 UnmuteHTTP:
@@ -239,6 +263,10 @@ UnmuteHTTP:
 		whr.Send()
 		whr.WaitForResponse()
 	}
+	else if (MusicPlayer = "Spotify")
+	{
+		SpotifyAPI.Player.SetVolume(SpotifyVolume)
+	}
 	return	
 TogglePauseHTTP:
 	whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
@@ -256,6 +284,10 @@ TogglePauseHTTP:
 		whr.Open("POST", url, true)
 		whr.Send()
 		whr.WaitForResponse()
+	}
+	else if (MusicPlayer = "Spotify")
+	{
+		SpotifyAPI.Player.PlayPause()
 	}
 	return
 WinampSettingsShow:
@@ -308,7 +340,15 @@ Update:
 	{
 		GuiControl, Disable, ToggleMute
 		GuiControl, Disable, TogglePause
-		GuiControl, Enable, SettingsButton
+		if (MusicPlayer = "Spotify")
+		{
+			GuiControl, Disable, SettingsButton
+			global SpotifyAPI := new Spotify
+		}
+		else
+		{
+			GuiControl, Enable, SettingsButton
+		}
 		GuiControl, Enable, MusicPlayer
 	}
 	return
