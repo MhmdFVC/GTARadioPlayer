@@ -11,6 +11,14 @@ IniRead, ToggleDisable, config.ini, Keybinds, ToggleDisable,%A_Space%
 IniRead, PlayMissionPassed, config.ini, Behavior, PlayMissionPassed, 1
 ;IniRead, DialogueAttenuate, config.ini, Behavior, DialogueAttenuate, 0
 IniRead, StartProg, config.ini, Behavior, StartProg, 0
+;IniRead, FoobarAuthNeeded, config.ini, Foobar, AuthNeeded, 0
+;IniRead, FoobarUsername, config.ini, Foobar, Username, %A_Space%
+;IniRead, FoobarPassword, config.ini, Foobar, Password, %A_Space%
+IniRead, FoobarPort, config.ini, Foobar, Port, 8880
+IniRead, WinampPassword, config.ini, Winamp, Password, %A_Space%
+IniRead, WinampPort, config.ini, Winamp, Port, 4800
+IniRead, MuteMethod, config.ini, Behavior, MuteMethod, Media Keys
+IniRead, MusicPlayer, config.ini, Player, MusicPlayer, foobar2000
 
 ReadMemory(MADDRESS,PROGRAM) ; copied from https://autohotkey.com/board/topic/33888-readmemory-function/
 {
@@ -41,6 +49,19 @@ ReadMemory(MADDRESS,PROGRAM) ; copied from https://autohotkey.com/board/topic/33
 ; Initialization
 MusicAudible = 1 ; start with your player unmuted
 PlayerPaused = 0 ; start with player unpaused/playing
+WinampVolume = 0 ; httpQ doesn't have a mute/unmute toggle like beefweb so need to get current volume level first and store it for later (also updated on every mute just in case) 
+if (MuteMethod = "HTTP Request")
+{
+	if (MusicPlayer = "Winamp")
+	{
+		whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		get_url = http://localhost:%WinampPort%/getvolume?p=%WinampPassword%
+		whr.Open("POST", get_url, true)
+		whr.Send()
+		whr.WaitForResponse()
+		WinampVolume := whr.ResponseText
+	}
+}
 
 gta3 := "ahk_class Grand theft auto 3" ; also used for VC
 vc := "GTA: Vice City" ; to distinguish from gta3
@@ -102,8 +123,52 @@ Gui, Add, Hotkey, x100 y162 w110 vToggleDisable gUpdate, %ToggleDisable%
 ;GuiControl,Disable,tempf
 ;GuiControl,Disable,fkey
 ;GuiControl,Disable,fbindon
+Gui, Add, Text, x2 y189 w80 h40 , Player muting method:
+Gui, Add, DropDownList, x82 y192 w95 h81 vMuteMethod gUpdate, Media Keys|HTTP Request
+Gui, Add, Button, x185 y189 w80 h30 vSettingsButton gShowSettings, Player-specific settings
+Gui, Add, Text, x2 y229 w100 h40 , Music player:`n(for HTTP Request)
+Gui, Add, DropDownList, x102 y232 w150 h80 vMusicPlayer gUpdate, foobar2000|Winamp
 
-Gui,Show,w270 h190,GTA Radio Player v1
+; Foobar settings GUI setup (didn't find anywhere in the API documentation how to even use the auth details so I'll just comment it all out for now)
+Gui, FoobarSettings:Add, Text, x12 y29 w30 h20 +Right +Center, Port:
+Gui, FoobarSettings:Add, Edit, x42 y29 w70 h20 +Left vFoobarPort, %FoobarPort%
+Gui, FoobarSettings:Add, Button, x144 y169 w80 h20 gSaveFoobarSettings, Save
+;Gui, FoobarSettings:Add, Text, x12 y79 w60 h20 , Username:
+;Gui, FoobarSettings:Add, CheckBox, x12 y49 w180 h30 Checked%FoobarAuthNeeded% vFoobarAuthNeeded, Username and Password needed
+;Gui, FoobarSettings:Add, Edit, x72 y79 w100 h20 vFoobarUsername, %FoobarUsername%
+;Gui, FoobarSettings:Add, Text, x12 y99 w60 h20 , Password:
+;Gui, FoobarSettings:Add, Edit, x72 y99 w100 h20 vFoobarPassword, %FoobarPassword%
+;Gui, FoobarSettings:Add, Text, x2 y129 w370 h30 +Center, Only check "Username and Password needed" and fill in the needed fields if you set them up in the foobar2000 plugin settings.
+Gui, FoobarSettings:Add, Link, x20 y9 w380 h20, This feature requires the <a href="https://www.foobar2000.org/components/view/foo_beefweb">Beefweb Remote Control</a> plugin for foobar2000.
+
+; Winamp settings GUI setup
+Gui, WinampSettings:Add, Text, x12 y29 w30 h20 +Right +Center, Port:
+Gui, WinampSettings:Add, Edit, x42 y29 w70 h20 +Left vWinampPort, %WinampPort%
+Gui, WinampSettings:Add, Button, x146 y89 w80 h20 gSaveWinampSettings, Save
+Gui, WinampSettings:Add, Text, x12 y49 w60 h20 , Password:
+Gui, WinampSettings:Add, Edit, x72 y49 w100 h20 vWinampPassword, %WinampPassword%
+Gui, WinampSettings:Add, Link, x70 y9 w380 h20, This feature requires the <a href="http://httpq.sourceforge.net/">httpQ</a> plugin for Winamp.
+
+; Set dropdown lists values to ones from INI
+GuiControl, Choose, MuteMethod, %MuteMethod%
+GuiControl, Choose, MusicPlayer, %MusicPlayer%
+
+; Disable not needed UI elements
+if (MuteMethod = "Media Keys") 
+{
+	GuiControl, Disable, SettingsButton
+	GuiControl, Enable, ToggleMute
+	GuiControl, Enable, TogglePause
+}
+else if (MuteMethod = "HTTP Request")
+{
+	GuiControl, Disable, ToggleMute
+	GuiControl, Disable, TogglePause
+	GuiControl, Enable, SettingsButton
+}
+
+
+Gui,Show,w270 h265,GTA Radio Player v1
 
 if (StartProg)
 	gosub Program
@@ -117,6 +182,100 @@ ToggleDisableProg:
 		Disabled = 1
 	}
 	return
+ShowSettings:
+	if (MusicPlayer = "foobar2000")
+	{
+		Gosub, FoobarSettingsShow
+	}
+	else if (MusicPlayer = "Winamp")
+	{
+		Gosub, WinampSettingsShow
+	}
+	return
+FoobarSettingsShow:
+	Gui, FoobarSettings:Show, h197 w373, foobar2000 Settings
+	return
+FoobarSettingsGuiClose:
+	Gui, FoobarSettings:Hide
+	return
+MuteHTTP:
+	whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+	if (MusicPlayer = "foobar2000") 
+	{
+
+		url = http://localhost:%FoobarPort%/api/player?isMuted=true
+		whr.Open("POST", url, true)
+		whr.SetRequestHeader("Accept", "application/json")
+		whr.Send()
+		whr.WaitForResponse()
+	}
+	else if (MusicPlayer = "Winamp")
+	{
+		get_url = http://localhost:%WinampPort%/getvolume?p=%WinampPassword%
+		whr.Open("POST", get_url, true)
+		whr.Send()
+		whr.WaitForResponse()
+		WinampVolume := whr.ResponseText
+		url = http://localhost:%WinampPort%/setvolume?p=%WinampPassword%&level=0
+		whr.Open("POST", url, true)
+		whr.Send()
+		whr.WaitForResponse()
+	}
+	return
+UnmuteHTTP:
+	whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+	if (MusicPlayer = "foobar2000")
+	{
+		url = http://localhost:%FoobarPort%/api/player?isMuted=false
+		whr.Open("POST", url, true)
+		whr.SetRequestHeader("Accept", "application/json")
+		whr.Send()
+		whr.WaitForResponse()
+	}
+	else if (MusicPlayer = "Winamp")
+	{
+		url = http://localhost:%WinampPort%/setvolume?p=%WinampPassword%&level=%WinampVolume%
+		whr.Open("POST", url, true)
+		whr.Send()
+		whr.WaitForResponse()
+	}
+	return	
+TogglePauseHTTP:
+	whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+	if (MusicPlayer = "foobar2000") 
+	{
+		url = http://localhost:%FoobarPort%/api/player/pause/toggle
+		whr.Open("POST", url, true)
+		whr.SetRequestHeader("Accept", "application/json")
+		whr.Send()
+		whr.WaitForResponse()
+	}
+	else if (MusicPlayer = "Winamp")
+	{
+		url = http://localhost:%WinampPort%/pause?p=%WinampPassword%
+		whr.Open("POST", url, true)
+		whr.Send()
+		whr.WaitForResponse()
+	}
+	return
+WinampSettingsShow:
+	Gui, WinampSettings:Show, h122 w377, Winamp Settings
+	return
+WinampSettingsGuiClose:
+	Gui, WinampSettings:Hide
+	return
+SaveFoobarSettings:
+	Gui, FoobarSettings:Submit, NoHide
+	;IniWrite, %FoobarAuthNeeded%, config.ini, Foobar, AuthNeeded
+	;IniWrite, %FoobarUsername%, config.ini, Foobar, Username
+	;IniWrite, %FoobarPassword%, config.ini, Foobar, Password
+	IniWrite, %FoobarPort%, config.ini, Foobar, Port
+	return
+SaveWinampSettings:
+	Gui, WinampSettings:Submit, NoHide
+	IniWrite, %WinampPassword%, config.ini, Winamp, Password
+	IniWrite, %WinampPort%, config.ini, Winamp, Port
+	return			
 About:
 	MsgBox,,About, Created by Mhmd_FVC and anti`nInspired as a better version of S's external radio program https://github.com/lotsofs/GTA-Radio-External`nMost memory addresses/values are taken from his program`n`nVersion 1 currently only supports GTA III and VC, but support for other games, expanded media player support, and more fine-tuning features may be to come. Feel free to fork and make your own changes.
 	return
@@ -136,6 +295,22 @@ Update:
 	IniWrite, %PlayMissionPassed%, config.ini, Behavior, PlayMissionPassed
 	;IniWrite, %DialogueAttenuate%, config.ini, Behavior, DialogueAttenuate
 	IniWrite, %StartProg%, config.ini, Behavior, StartProg
+	IniWrite, %MuteMethod%, config.ini, Behavior, MuteMethod
+	IniWrite, %MusicPlayer%, config.ini, Player, MusicPlayer
+	if (MuteMethod = "Media Keys") 
+	{
+		GuiControl, Disable, SettingsButton
+		GuiControl, Disable, MusicPlayer
+		GuiControl, Enable, ToggleMute
+		GuiControl, Enable, TogglePause
+	}
+	else if (MuteMethod = "HTTP Request")
+	{
+		GuiControl, Disable, ToggleMute
+		GuiControl, Disable, TogglePause
+		GuiControl, Enable, SettingsButton
+		GuiControl, Enable, MusicPlayer
+	}
 	return
 BindHelp:
 	MsgBox,,Keybind instructions, 1) Choose keys to bind, and enter them into the boxes below. Make sure your hotkeys don't conflict with any binds in-game or weird stuff will happen.`n`n2) For Mute and Pause, bind them as global hotkeys in your media player. Include duplicates for your most important modifier key binds in-game (e.g. if you make your bind for mute F10, make sure you bind SHIFT+F10, ALT+F10, SHIFT+ALT+F10, etc. in your player) so that your player doesn't misconstrue the bind when holding Shift when entering/exiting a vehicle or when holding sub-mission with Alt, for example.`n`n3) Start with your player UNMUTED and PLAYING. After the initial adjustment (if needed) it should work fine for the rest of your session.`n`n* The reason for using these instead of the media functions you find on keyboards etc. is because they affect system volume, or in the case of play/pause, it makes a huge pop-up about your music show up on Windows 10. Apparently there's a workaround for that though, so if you use that, you can just make your Pause key Media_Play_Pause using your keyboard or manually in the config file.
@@ -164,11 +339,32 @@ BindHelp:
 ;	return
 GuiClose:
 	if (!MusicAudible)
-		Send {Blind}{%ToggleMute%}
+	{
+		if (MuteMethod = "Media Keys")
+		{
+			Send {Blind}{%ToggleMute%}
+			
+		}
+		else if (MuteMethod = "HTTP Request")
+		{
+			Gosub, UnmuteHTTP
+		}
 		MusicAudible = 1
+	}
+
 	if (PlayerPaused)
-		Send {Blind}{%TogglePause%}
+	{
+		if (MuteMethod = "Media Keys")
+		{
+			Send {Blind}{%TogglePause%}
+			
+		}
+		else if (MuteMethod = "HTTP Request")
+		{
+			Gosub, TogglePauseHTTP
+		}
 		PlayerPaused = 0
+	}
 	ExitApp
 	return
 
@@ -269,36 +465,72 @@ While (StartProg) {
 		
 		if (RadioStatus = 50629 || RadioStatus = 197) { ; menu
 			if (MusicAudible) { ; mute in menu
-				Send {Blind}{%ToggleMute%}
+				if (MuteMethod = "Media Keys")
+				{
+					Send {Blind}{%ToggleMute%}
+					
+				}
+				else if (MuteMethod = "HTTP Request")
+				{
+					Gosub, MuteHTTP
+				}
 				MusicAudible = 0
 			} if (MissionPassedPlaying) { ; cancel mission passed theme if game paused
 				SoundPlay, yeah.wav
-				;SoundPlay, D:\Users\Aiden\Documents\GTA3 User Files\yeah.wav
 				MissionPassedPlaying = 0
 				sleep 100
 			}
 		} else if ((RadioStatus = 2827 || RadioStatus = 3084 || RadioStatus = 11 || RadioStatus = 12) || (RadioStatus = 93 || RadioStatus = 116061 || RadioStatus = 453)) { ; mute while on foot/mission passed
 			if (MusicAudible) {
-				Send {Blind}{%ToggleMute%}
+				if (MuteMethod = "Media Keys")
+				{
+					Send {Blind}{%ToggleMute%}
+					
+				}
+				else if (MuteMethod = "HTTP Request")
+				{
+					Gosub, MuteHTTP
+				}
 				MusicAudible = 0
 			}
 			if ((RadioStatus = 93 || RadioStatus = 116061 || RadioStatus = 453) && PlayMissionPassed && !MissionPassedPlaying) { ; mission passed and configured to play theme
 				SoundPlay, miscom3.wav
-				;SoundPlay, D:\Users\Aiden\Documents\GTA3 User Files\miscom3.wav
 				MissionPassedPlaying = 1
 			}
 		} else if (((RadioStatus >= 0 && RadioStatus <= 10) || RadioStatus = 257 || RadioStatus = 514 || RadioStatus =  771
 				|| RadioStatus = 1028 || RadioStatus = 1285 || RadioStatus = 1542 || RadioStatus = 1799 || RadioStatus = 2313
 				|| RadioStatus = 2056 || RadioStatus = 2570) && WinExist(gta3) && !MusicAudible) { ; play music in vehicle 
-			Send {Blind}{%ToggleMute%}
+			if (MuteMethod = "Media Keys")
+			{
+				Send {Blind}{%ToggleMute%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, UnmuteHTTP
+			}
 			MusicAudible = 1
 		}
 		
 		if (ReplayStatus = 0 && WinExist(gta3) && !PlayerPaused) { ; if replay playing and game is open (would assume it's =0 if the game isn't open)
-			Send {Blind}{%TogglePause%}
+			if (MuteMethod = "Media Keys")
+			{
+				Send {Blind}{%TogglePause%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, TogglePauseHTTP
+			}
 			PlayerPaused = 1
 		} else if (ReplayStatus = 19 && PlayerPaused) { ; unpause after replay is over
-			Send {Blind}{%TogglePause%}
+			if (MuteMethod = "Media Keys")
+			{
+				Send {Blind}{%TogglePause%}
+				
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, TogglePauseHTTP
+			}
 			PlayerPaused = 0
 		}
 		;if (DialogueAttenuate) { ; skips if preference not set
@@ -316,15 +548,47 @@ While (StartProg) {
 			GuiControl,-c +cRed,OnOff
 			GuiControl,Text,OnOff,OFF
 			if (MusicAudible)
-				Send {Blind}{%ToggleMute%}
+				if (MuteMethod = "Media Keys")
+				{
+					Send {Blind}{%ToggleMute%}
+					
+				}
+				else if (MuteMethod = "HTTP Request")
+				{
+					Gosub, MuteHTTP
+				}
 			if (!PlayerPaused)
-				Send {Blind}{%TogglePause%}
+				if (MuteMethod = "Media Keys")
+				{
+					Send {Blind}{%TogglePause%}
+					
+				}
+				else if (MuteMethod = "HTTP Request")
+				{
+					Gosub, TogglePauseHTTP
+				}
 			While (Disabled && StartProg)
 				sleep 100
 			if (MusicAudible)
-				Send {Blind}{%ToggleMute%}
+				if (MuteMethod = "Media Keys")
+				{
+					Send {Blind}{%ToggleMute%}
+					
+				}
+				else if (MuteMethod = "HTTP Request")
+				{
+					Gosub, MuteHTTP
+				}
 			if (!PlayerPaused)
-				Send {Blind}{%TogglePause%}
+				if (MuteMethod = "Media Keys")
+				{
+					Send {Blind}{%TogglePause%}
+					
+				}
+				else if (MuteMethod = "HTTP Request")
+				{
+					Gosub, TogglePauseHTTP
+				}
 			GuiControl,-c +cGreen,OnOff
 			GuiControl,Text,OnOff,ON
 		}
@@ -343,7 +607,15 @@ While (StartProg) {
 		
 		if (RadioStatus = 1225) { ; menu or replay
 			if (MusicAudible) { ; mute in menu
-				Send {Blind}{%ToggleMute%}
+				if (MuteMethod = "Media Keys")
+				{
+					Send {Blind}{%ToggleMute%}
+					
+				}
+				else if (MuteMethod = "HTTP Request")
+				{
+					Gosub, MuteHTTP
+				}
 				MusicAudible = 0
 			}
 			if (MissionPassedPlaying) { ; cancel mission passed theme if game paused
@@ -357,18 +629,47 @@ While (StartProg) {
 		} else if (RadioStatus != 101 && MissionPassedPlaying) ; reset missionpassedplaying var if it's done playing
 			MissionPassedPlaying = 0
 		else if ((RadioStatus = 10 || RadioStatus = 11 || RadioStatus = 16 || RadioStatus = 21 || RadioStatus = 22) && MusicAudible) { 
-			Send {Blind}{%ToggleMute%}
+			if (MuteMethod = "Media Keys")
+			{
+				Send {Blind}{%ToggleMute%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, MuteHTTP
+			}
 			MusicAudible = 0
 		} else if (((RadioStatus >= 0 && RadioStatus <= 9) || (RadioStatus >= 23 && RadioStatus <= 26)) && WinExist(gta3) && !MusicAudible) { ; play music in vehicle 
-			Send {Blind}{%ToggleMute%}
+			if (MuteMethod = "Media Keys")
+			{
+				Send {Blind}{%ToggleMute%}
+				
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, UnmuteHTTP
+			}
 			MusicAudible = 1
 		}
 		
 		if ((ReplayStatus = 1 || ReplayStatus = 65537) && WinExist(gta3) && !PlayerPaused) { ; if replay playing and game is open (would assume it's =0 if the game isn't open)
-			Send {Blind}{%TogglePause%}
+			if (MuteMethod = "Media Keys")
+			{
+				Send {Blind}{%TogglePause%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, TogglePauseHTTP
+			}
 			PlayerPaused = 1
 		} else if ((ReplayStatus = 0 || ReplayStatus = 65536) && PlayerPaused) { ; unpause after replay is over
-			Send {Blind}{%TogglePause%}
+			if (MuteMethod = "Media Keys")
+			{
+				Send {Blind}{%TogglePause%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, TogglePauseHTTP
+			}
 			PlayerPaused = 0
 		}
 		
@@ -410,7 +711,14 @@ While (StartProg) {
 			Send {Blind}{%ToggleMute%}
 			MusicAudible = 1
 		} else if (PlayerPaused) {
-			Send {Blind}{%TogglePause%}
+			if (MuteMethod = "Media Keys")
+			{
+				Send {Blind}{%TogglePause%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, TogglePauseHTTP
+			}
 			PlayerPaused = 0
 		}
 	}
