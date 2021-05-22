@@ -23,6 +23,11 @@ On a similar note, one major limitation of the program at the moment is that bec
 
 **Unfortunately, this means that if you're using a player that does not have versatile hotkey support (Spotify, WMP, etc.), this isn't going to work for you.** I'm too much of a noob to properly figure out how to send keypresses directly to specific windows, but maybe someone will come along and do the honors.
 
+## HTTP Request muting/pausing
+*Currently, only foobar2000 and Winamp are supported with this method.*
+
+This method uses [beefweb](https://www.foobar2000.org/components/view/foo_beefweb) for foobar2000 and [httpQ](http://httpq.sourceforge.net/) to control the player using HTTP requests. This eliminates the need to use standard keybinds. However, due to httpQ's limitation, all actions performed on Winamp has a 1-2 second delay. I don't think much can be done about that, other than switching the plugin used to control Winamp. If you know of a good plugin for Winamp that supports controlling the player using external code, let me know (hoxi#9571 on Discord).
+
 ## Mission Passed theme
 If you check this option, the program will play miscom3.wav or miscomVC.wav upon mission completion, depending on your game. You can use the III and VC buttons to test the volume levels and adjust them in the volume mixer, which you're probably going to want to do. In (most) situations where the theme gets interrupted, yeah.wav (a blank sound file) is played in order to interrupt playback. I know, it's kind of ghetto, but AHK didn't seem to have another way of doing this. This feature would be unnecessary for San Andreas since it plays the theme regardless of the music being on or off.
 
