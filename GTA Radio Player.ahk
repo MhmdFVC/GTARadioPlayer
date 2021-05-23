@@ -35,6 +35,7 @@ ReadMemory(MADDRESS,PROGRAM) ; copied from https://autohotkey.com/board/topic/33
 	return, result
 }
 
+
 ; Used for the dialogue stuff which isn't being implemented atm
 ;int2hex(int)
 ;{
@@ -53,6 +54,7 @@ MusicAudible = 1 ; start with your player unmuted
 PlayerPaused = 0 ; start with player unpaused/playing
 WinampVolume := 0 ; httpQ doesn't have a mute/unmute toggle like beefweb so need to get current volume level first and store it for later (also updated on every mute just in case)
 SpotifyVolume := 0 ; no mute/unmute toggle like beefweb, so going the winamp route 
+SpotifyTokenRefreshTimestamp := 0 ; used for token refreshing
 
 if (MuteMethod = "HTTP Request")
 {
@@ -75,6 +77,7 @@ if (MuteMethod = "HTTP Request")
 	else if (MusicPlayer = "Spotify")
 	{
 		global SpotifyAPI := new Spotify
+		SpotifyTokenRefreshTimestamp := A_TickCount
 		CurrentVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
 		if (CurrentVolume != 0) {
 			SpotifyVolume := CurrentVolume
@@ -201,6 +204,10 @@ if (StartProg)
 	
 return
 
+RefreshAccessToken:
+	RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
+	SpotifyAPI.Util.RefreshTempToken(RefreshToken)
+	return	
 ToggleDisableProg:
 	if (Disabled) {
 		Disabled = 0
@@ -255,7 +262,15 @@ MuteHTTP:
 		if (CurrentVolume != 0) {
 			SpotifyVolume := CurrentVolume
 		}
-		SpotifyAPI.Player.SetVolume(0)
+		if (A_Now - SpotifyTokenRefreshTimestamp / 1000 > 3000) ; access token lasts an hour, so refresh it BEFORE it expires just to be safe
+		{
+			Gosub, RefreshAccessToken ; refresh, then do action
+			SpotifyAPI.Player.SetVolume(0)
+		}
+		else
+		{
+			SpotifyAPI.Player.SetVolume(0) ; if 50 minutes haven't passed, just do action
+		}
 	}
 	return
 UnmuteHTTP:
@@ -277,7 +292,15 @@ UnmuteHTTP:
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		SpotifyAPI.Player.SetVolume(SpotifyVolume)
+		if (A_Now - SpotifyTokenRefreshTimestamp / 1000 > 3000) ; access token lasts an hour, so refresh it BEFORE it expires just to be safe
+		{
+			Gosub, RefreshAccessToken ; refresh, then do action
+			SpotifyAPI.Player.SetVolume(SpotifyVolume)
+		}
+		else
+		{
+			SpotifyAPI.Player.SetVolume(SpotifyVolume) ; if 50 minutes haven't passed, just do action
+		}
 	}
 	return	
 TogglePauseHTTP:
@@ -299,7 +322,15 @@ TogglePauseHTTP:
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		SpotifyAPI.Player.PlayPause()
+		if (A_Now - SpotifyTokenRefreshTimestamp / 1000 > 3000) ; access token lasts an hour, so refresh it BEFORE it expires just to be safe
+		{
+			Gosub, RefreshAccessToken ; refresh, then do action
+			SpotifyAPI.Player.PlayPause()
+		}
+		else
+		{
+			SpotifyAPI.Player.PlayPause() ; if 50 minutes haven't passed, just do action
+		}
 	}
 	return
 WinampSettingsShow:
