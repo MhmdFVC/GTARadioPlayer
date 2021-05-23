@@ -207,7 +207,7 @@ return
 RefreshAccessToken:
 	RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
 	SpotifyAPI.Util.RefreshTempToken(RefreshToken)
-	SpotifyTokenRefreshTimestamp = A_Now
+	SpotifyTokenRefreshTimestamp = A_TickCount
 	return	
 ToggleDisableProg:
 	if (Disabled) {
@@ -263,15 +263,7 @@ MuteHTTP:
 		if (CurrentVolume != 0) {
 			SpotifyVolume := CurrentVolume
 		}
-		if (A_Now - SpotifyTokenRefreshTimestamp / 1000 > 3000) ; access token lasts an hour, so refresh it BEFORE it expires just to be safe
-		{
-			Gosub, RefreshAccessToken ; refresh, then do action
-			SpotifyAPI.Player.SetVolume(0)
-		}
-		else
-		{
-			SpotifyAPI.Player.SetVolume(0) ; if 50 minutes haven't passed, just do action
-		}
+		SpotifyAPI.Player.SetVolume(0)
 	}
 	return
 UnmuteHTTP:
@@ -293,15 +285,7 @@ UnmuteHTTP:
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		if (A_Now - SpotifyTokenRefreshTimestamp / 1000 > 3000) ; access token lasts an hour, so refresh it BEFORE it expires just to be safe
-		{
-			Gosub, RefreshAccessToken ; refresh, then do action
-			SpotifyAPI.Player.SetVolume(SpotifyVolume)
-		}
-		else
-		{
-			SpotifyAPI.Player.SetVolume(SpotifyVolume) ; if 50 minutes haven't passed, just do action
-		}
+		SpotifyAPI.Player.SetVolume(SpotifyVolume)
 	}
 	return	
 TogglePauseHTTP:
@@ -323,15 +307,7 @@ TogglePauseHTTP:
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		if (A_Now - SpotifyTokenRefreshTimestamp / 1000 > 3000) ; access token lasts an hour, so refresh it BEFORE it expires just to be safe
-		{
-			Gosub, RefreshAccessToken ; refresh, then do action
-			SpotifyAPI.Player.PlayPause()
-		}
-		else
-		{
-			SpotifyAPI.Player.PlayPause() ; if 50 minutes haven't passed, just do action
-		}
+		SpotifyAPI.Player.PlayPause()
 	}
 	return
 WinampSettingsShow:
@@ -484,7 +460,11 @@ GuiControl,Show,OnOff
 ; Actual program
 While (StartProg) {
 	Gui,Submit,NoHide
-	
+	While ((A_TickCount - SpotifyTokenRefreshTimestamp) / 1000 > 3000) ; 50min
+	{
+		SpotifyTokenRefreshTimestamp := A_TickCount
+		Gosub, RefreshAccessToken
+	}
 	sleep 1500 ; so it's not wasting CPU while a game isn't even open
 	; determine game version
 	if (WinExist(gta3) && !WinExist(vc)) { ; GTA III
