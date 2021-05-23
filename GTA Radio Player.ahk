@@ -207,6 +207,7 @@ return
 RefreshAccessToken:
 	RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
 	SpotifyAPI.Util.RefreshTempToken(RefreshToken)
+	SpotifyTokenRefreshTimestamp = A_Now
 	return	
 ToggleDisableProg:
 	if (Disabled) {
