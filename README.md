@@ -1,5 +1,5 @@
 # GTA Radio Player
-A script that sends hotkeys for the purpose of controlling an external media player as if it were in-game GTA radio. Contributions by Anti.
+A script that sends hotkeys for the purpose of controlling an external media player as if it were in-game GTA radio. Contributions by Anti and hoxi.
 
 Inspired as an expanded version of S's [GTA Radio External](https://github.com/lotsofs/GTA-Radio-External).
 Currently only supports GTA III and Vice City (all international releases plus Vice City Japanese). San Andreas support is coming soon(tm), and I imagine this can be done to support other GTA games as well. Report issues here in GitHub or by @ing me where I can be @ed. (Twitter @srlMhmd, Discord Mhmd_FVC#8760)
