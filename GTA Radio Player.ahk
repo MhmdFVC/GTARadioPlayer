@@ -1,8 +1,15 @@
 #SingleInstance,force
 #Include Spotify.ahk
+#Include array_base.ahk
 SendMode Input
 OnExit, GuiClose
 
+
+; Extend Array object
+Array(prms*) {
+    prms.base := _Array
+    return prms
+}
 
 ; READ CONFIG
 IniRead, ToggleMute, config.ini, Keybinds, ToggleMute, %A_Space%
@@ -55,6 +62,13 @@ PlayerPaused = 0 ; start with player unpaused/playing
 WinampVolume := 0 ; httpQ doesn't have a mute/unmute toggle like beefweb so need to get current volume level first and store it for later (also updated on every mute just in case)
 SpotifyVolume := 0 ; no mute/unmute toggle like beefweb, so going the winamp route 
 SpotifyTokenRefreshTimestamp := 0 ; used for token refreshing
+; III
+IIIMenuValues := [50629, 197]
+IIIMuteValues := [2827, 3084, 11, 12, 93, 116061, 453]
+IIIUnmuteValues := [257, 514, 771, 1028, 1285, 1542, 1799, 2313, 2056, 2570]
+IIIMissionPassedValues := [93, 116061, 453]
+; VC
+VCMuteValues := [10, 11, 16, 21, 22]
 
 if (MuteMethod = "HTTP Request")
 {
@@ -531,7 +545,7 @@ While (StartProg) {
 		ReplayStatus := ReadMemory(ReplayAddr, gta3)
 		;DialogueStatus := ReadMemory(DialogueAddr, gta3)
 		
-		if (RadioStatus = 50629 || RadioStatus = 197) { ; menu
+		if (IIIMenuValues.includes(RadioStatus)) { ; menu
 			if (MusicAudible) { ; mute in menu
 				if (MuteMethod = "Classic Keybinds")
 				{
@@ -548,7 +562,7 @@ While (StartProg) {
 				MissionPassedPlaying = 0
 				sleep 100
 			}
-		} else if ((RadioStatus = 2827 || RadioStatus = 3084 || RadioStatus = 11 || RadioStatus = 12) || (RadioStatus = 93 || RadioStatus = 116061 || RadioStatus = 453)) { ; mute while on foot/mission passed
+		} else if (IIIMuteValues.includes(RadioStatus)) { ; mute while on foot/mission passed
 			if (MusicAudible) {
 				if (MuteMethod = "Classic Keybinds")
 				{
@@ -561,13 +575,11 @@ While (StartProg) {
 				}
 				MusicAudible = 0
 			}
-			if ((RadioStatus = 93 || RadioStatus = 116061 || RadioStatus = 453) && PlayMissionPassed && !MissionPassedPlaying) { ; mission passed and configured to play theme
+			if (IIIMissionPassedValues.includes(RadioStatus) && PlayMissionPassed && !MissionPassedPlaying) { ; mission passed and configured to play theme
 				SoundPlay, miscom3.wav
 				MissionPassedPlaying = 1
 			}
-		} else if (((RadioStatus >= 0 && RadioStatus <= 10) || RadioStatus = 257 || RadioStatus = 514 || RadioStatus =  771
-				|| RadioStatus = 1028 || RadioStatus = 1285 || RadioStatus = 1542 || RadioStatus = 1799 || RadioStatus = 2313
-				|| RadioStatus = 2056 || RadioStatus = 2570) && WinExist(gta3) && !MusicAudible) { ; play music in vehicle 
+		} else if (((RadioStatus >= 0 && RadioStatus <= 10) || IIIUnmuteValues.includes(RadioStatus)) && WinExist(gta3) && !MusicAudible) { ; play music in vehicle 
 			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%ToggleMute%}
@@ -696,7 +708,7 @@ While (StartProg) {
 		; on foot or in north point mall or riot crowd (on foot) or vercetti mansion (on foot) 
 		} else if (RadioStatus != 101 && MissionPassedPlaying) ; reset missionpassedplaying var if it's done playing
 			MissionPassedPlaying = 0
-		else if ((RadioStatus = 10 || RadioStatus = 11 || RadioStatus = 16 || RadioStatus = 21 || RadioStatus = 22) && MusicAudible) { 
+		else if (VCMuteValues.includes(RadioStatus) && MusicAudible) { 
 			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%ToggleMute%}
