@@ -803,8 +803,6 @@ While (StartProg) {
 		}
 	}
 }
-GuiControl,Enable,ToggleMute
-GuiControl,Enable,TogglePause
 GuiControl,Enable,ToggleDisable
 ;GuiControl,Enable,VolumeUp
 ;GuiControl,Enable,VolumeDown
@@ -819,9 +817,29 @@ GuiControl,Enable,M
 GuiControl,Enable,Fh
 GuiControl,Enable,Kbch
 GuiControl,Enable,Td
-GuiControl,Enable,SettingsButton
-GuiControl,Enable,MusicPlayer
-GuiControl,Enable,MuteMethod
+GuiControl, Enable, MuteMethod	
+if (MuteMethod = "Classic Keybinds") 
+{
+	GuiControl, Disable, SettingsButton
+	GuiControl, Disable, MusicPlayer
+	GuiControl, Enable, ToggleMute
+	GuiControl, Enable, TogglePause
+}
+else if (MuteMethod = "HTTP Request")
+{
+	GuiControl, Disable, ToggleMute
+	GuiControl, Disable, TogglePause
+
+	if (MusicPlayer = "Spotify")
+	{
+		GuiControl, Disable, SettingsButton
+	}
+	else
+	{
+		GuiControl, Enable, SettingsButton
+	}
+	GuiControl, Enable, MusicPlayer
+}
 GuiControl,Hide,OnOff
 GuiControl,Text,Ver,Game:
 IniWrite, %StartProg%, config.ini, Behavior, StartProg
