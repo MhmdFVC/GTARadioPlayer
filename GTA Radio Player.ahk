@@ -189,35 +189,127 @@ Gui, WinampSettings:Add, Link, x70 y9 w380 h20, This feature requires the <a hre
 GuiControl, Choose, MuteMethod, %MuteMethod%
 GuiControl, Choose, MusicPlayer, %MusicPlayer%
 
+; Custom tray menu
+Menu, MuteMethodMenu, Add, Classic Keybinds, SetClassicMute
+Menu, MuteMethodMenu, Add, HTTP Request, SetHTTPMute
+Menu, MusicPlayerMenu, Add, foobar2000, SetFoobarPlayer
+Menu, MusicPlayerMenu, Add, Winamp, SetWinampPlayer
+Menu, MusicPlayerMenu, Add, Spotify, SetSpotifyPlayer
+Menu, Tray, NoStandard
+Menu, Tray, Add, Mute Method, :MuteMethodMenu
+Menu, Tray, Add, Music Player, :MusicPlayerMenu
+Menu, Tray, Add
+Menu, Tray, Add, Restart, Restart
+Menu, Tray, Add, Quit, Quit
+
 ; Disable not needed UI elements (and set up Spotify instance if needed)
 if (MuteMethod = "Classic Keybinds") 
 {
 	GuiControl, Disable, SettingsButton
+	GuiControl, Disable, MusicPlayer
 	GuiControl, Enable, ToggleMute
 	GuiControl, Enable, TogglePause
+	Menu, Tray, Disable, Music Player
+	Menu, MuteMethodMenu, Check, Classic Keybinds
 }
 else if (MuteMethod = "HTTP Request")
 {
 	GuiControl, Disable, ToggleMute
 	GuiControl, Disable, TogglePause
+	Menu, MuteMethodMenu, Check, HTTP Request
+	Menu, Tray, Enable, Music Player
 	if (MusicPlayer = "Spotify")
 	{
 		GuiControl, Disable, SettingsButton
+		Menu, MusicPlayerMenu, Check, Spotify
 	}
 	else
 	{
+		if (MusicPlayer = "foobar2000")
+		{
+			Menu, MusicPlayerMenu, Check, foobar2000
+		}
+	    else if (MusicPlayer = "Winamp")
+		{
+			Menu, MusicPlayerMenu, Check, Winamp
+		}
 		GuiControl, Enable, SettingsButton
 	}
 }
 
 
-Gui,Show,w270 h265,GTA Radio Player v1
+Gui,Show,w270 h265,GTA Radio Player
 
 if (StartProg)
 	gosub Program
 	
 return
 
+Quit:
+	ExitApp
+	return
+Restart:
+	Reload
+	return	
+SetClassicMute:
+	MuteMethod = Classic Keybinds
+	IniWrite, %MuteMethod%, config.ini, Behavior, MuteMethod
+	Menu, MuteMethodMenu, Uncheck, HTTP Request
+	Menu, MuteMethodMenu, Check, Classic Keybinds
+	Menu, Tray, Disable, Music Player
+	GuiControl, Choose, MuteMethod, %MuteMethod%
+	GuiControl, Disable, SettingsButton
+	GuiControl, Disable, MusicPlayer
+	GuiControl, Enable, ToggleMute
+	GuiControl, Enable, TogglePause
+	return
+SetHTTPMute:
+	MuteMethod = HTTP Request
+	IniWrite, %MuteMethod%, config.ini, Behavior, MuteMethod
+	Menu, MuteMethodMenu, Uncheck, Classic Keybinds
+	Menu, MuteMethodMenu, Check, HTTP Request
+	Menu, Tray, Enable, Music Player
+	GuiControl, Choose, MuteMethod, %MuteMethod%
+	GuiControl, Disable, ToggleMute
+	GuiControl, Disable, TogglePause
+	if (MusicPlayer = "Spotify")
+	{
+		GuiControl, Disable, SettingsButton
+		global SpotifyAPI := new Spotify
+	}
+	else
+	{
+		GuiControl, Enable, SettingsButton
+	}
+	GuiControl, Enable, MusicPlayer
+	return
+SetFoobarPlayer:
+	MusicPlayer = foobar2000	
+	IniWrite, %MusicPlayer%, config.ini, Behavior, MusicPlayer
+	GuiControl, Choose, MusicPlayer, %MusicPlayer%
+	GuiControl, Enable, SettingsButton
+	Menu, MusicPlayerMenu, Uncheck, Winamp
+	Menu, MusicPlayerMenu, Uncheck, Spotify
+	Menu, MusicPlayerMenu, Check, foobar2000
+	return
+SetWinampPlayer:
+	MusicPlayer = Winamp	
+	IniWrite, %MusicPlayer%, config.ini, Behavior, MusicPlayer
+	GuiControl, Choose, MusicPlayer, %MusicPlayer%
+	GuiControl, Enable, SettingsButton
+	Menu, MusicPlayerMenu, Check, Winamp
+	Menu, MusicPlayerMenu, Uncheck, Spotify
+	Menu, MusicPlayerMenu, Uncheck, foobar2000	
+	return
+SetSpotifyPlayer:
+	MusicPlayer = Spotify	
+	IniWrite, %MusicPlayer%, config.ini, Behavior, MusicPlayer
+	GuiControl, Choose, MusicPlayer, %MusicPlayer%
+	GuiControl, Disable, SettingsButton
+	Menu, MusicPlayerMenu, Uncheck, Winamp
+	Menu, MusicPlayerMenu, Check, Spotify
+	Menu, MusicPlayerMenu, Uncheck, foobar2000
+	return		
 RefreshAccessToken:
 	RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
 	SpotifyAPI.Util.RefreshTempToken(RefreshToken)
