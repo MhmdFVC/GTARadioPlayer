@@ -1,6 +1,7 @@
 #SingleInstance,force
 #Include Spotify.ahk
 #Include array_base.ahk
+#Include classMemory.ahk
 SendMode Input
 OnExit, GuiClose
 
@@ -99,6 +100,8 @@ if (MuteMethod = "HTTP Request")
 	}
 }
 
+
+
 gta3 := "ahk_class Grand theft auto 3" ; also used for VC
 vc := "GTA: Vice City" ; to distinguish from gta3
 sa := "GTA: San Andreas"
@@ -107,11 +110,13 @@ game := gta3 ; default (no SA support yet and saves one line of code anyway)
 
 RadioAddr := 0x0
 ReplayAddr := 0x0
+MenuAddr := 0x0 ; only used for SA
 ;DialoguePoint := 0x0
 ;DialogueAddr := 0x0
 
 RadioStatus = 0
 ReplayStatus = 0
+MenuStatus = 0 ; only used for SA
 ;DialogueStatus = 0
 
 MissionPassedPlaying = 0
@@ -612,19 +617,36 @@ While (StartProg) {
 			ReplayAddr := 0x977DA8
 			GuiControl,Text,Ver,Game: Vice City Steam
 		}
-	} ;else if (WinExist(sa)) { ; San Andreas
-	;	game := sa
-	;	if (ReadMemory(0x82457C, sa) = 38079 || ReadMemory(0x8245BC, sa) = 38079) { ; 1.0 US/EU
-	;		RadioAddr := 0x8CB760
-	;		GuiControl,Text,Ver,Game: San Andreas Retail 1.0
-	;	} else if (ReadMemory(0x8252FC, sa) = 38079 || ReadMemory(0x82533C, sa) = 38079) { ; 1.1 US/EU
-	;		RadioAddr := 0x8CCFE8
-	;		GuiControl,Text,Ver,Game: San Andreas Retail 1.1
-	;	} else if (ReadMemory(0x85EC4A, sa) = 38079) { ; 3.0 Steam
-	;		RadioAddr := 0x93AB68
-	;		GuiControl,Text,Ver,Game: San Andreas Steam
-	;	}
-	;}
+	} else if (WinExist(sa)) { ; San Andreas
+		game := sa
+		gameprocess := []
+		baseAddress := 0
+		if (WinExist("ahk_exe gta-sa.exe")) { ; check if Steam version is running
+			gameprocess := new _ClassMemory("ahk_exe gta-sa.exe", "", hProcessCopy) 
+			baseAddress := gameprocess.getModuleBaseAddress("gta-sa.exe")
+		}
+		if (ReadMemory(0x82457C, sa) = 38079 || ReadMemory(0x8245BC, sa) = 38079) { ; 1.0 US/EU
+			RadioAddr := 0x8CB760
+			ReplayAddr := 0xA43088
+			MenuAddr := 0xBA67A4
+			GuiControl,Text,Ver,Game: SA Retail 1.0
+		} else if (ReadMemory(0x8252FC, sa) = 38079 || ReadMemory(0x82533C, sa) = 38079) { ; 1.1 US/EU
+			RadioAddr := 0x8CCFE8
+			ReplayAddr := 0xA45708
+			MenuAddr := 0xB6DFE4
+			GuiControl,Text,Ver,Game: SA Retail 1.1
+		} else if (ReadMemory(0x85EC4A, sa) = 38079) { ; 3.0 Steam
+			RadioAddr := 0x93AB68
+			ReplayAddr := 0xAB8208
+			MenuAddr := 0xC3315C
+			GuiControl,Text,Ver,Game: SA Steam 3.0
+		} else if (baseAddress = 10944512) { ; NewSteam R2
+			RadioAddr := 0xFABA48
+			ReplayAddr := 0x112AA48
+			MenuAddr := 0x126AF2C
+			GuiControl,Text,Ver,Game: SA NewSteam R2
+		}
+	}
 	else {
 		GuiControl,Text,Ver,Game: Undetected
 		continue ; doesn't bother with the rest of the script until a game is open
@@ -870,12 +892,93 @@ While (StartProg) {
 	}
 	
 	; San Andreas
-	;While (WinExist(sa) && StartProg) {
-	;	RadioStatus := ReadMemory(RadioAddr, sa)
-	;	
-	;	sleep 100
-	;	Gui,Submit,NoHide
-	;}
+	While (WinExist(sa) && StartProg) {
+		RadioStatus := ReadMemory(RadioAddr, sa)
+		ReplayStatus := ReadMemory(ReplayAddr, sa)
+		MenuStatus := ReadMemory(MenuAddr, sa)
+
+		if (RadioStatus = 2 && MenuStatus = 0 && !MusicAudible && WinExist(sa)) ; play music in vehicle
+		{
+			if (MuteMethod = "Classic Keybinds")
+			{
+				Send {Blind}{%ToggleMute%}
+				
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, UnmuteHTTP
+			}
+			MusicAudible = 1
+		}
+		else if ((RadioStatus = 7 || RadioStatus = 1 || RadioStatus = 6) && MenuStatus = 0 && MusicAudible) ; mute when outside of vehicle and when mission passed music is playing
+		{
+			if (MuteMethod = "Classic Keybinds")
+			{
+				Send {Blind}{%ToggleMute%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, MuteHTTP
+			}
+			MusicAudible = 0
+		}
+		else if (MenuStatus = 1 && MusicAudible) ; mute in menu
+		{
+			if (MuteMethod = "Classic Keybinds")
+			{
+				Send {Blind}{%ToggleMute%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, MuteHTTP
+			}
+			MusicAudible = 0
+		}
+
+		if (ReplayStatus = 1 && WinExist(sa) && !PlayerPaused) { ; if replay playing and game is open (would assume it's =0 if the game isn't open)
+			if (MuteMethod = "Classic Keybinds")
+			{
+				Send {Blind}{%TogglePause%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, TogglePauseHTTP
+			}
+			PlayerPaused = 1
+		} else if (ReplayStatus = 0 && PlayerPaused) { ; unpause after replay is over
+			if (MuteMethod = "Classic Keybinds")
+			{
+				Send {Blind}{%TogglePause%}
+			}
+			else if (MuteMethod = "HTTP Request")
+			{
+				Gosub, TogglePauseHTTP
+			}
+			PlayerPaused = 0
+		}
+
+		if (Disabled) {
+			GuiControl,-c +cRed,OnOff
+			GuiControl,Text,OnOff,OFF
+			if (MusicAudible)
+				Send {Blind}{%ToggleMute%}
+			if (!PlayerPaused)
+				Send {Blind}{%TogglePause%}
+			While (Disabled && StartProg)
+				sleep 100
+			if (MusicAudible)
+				Send {Blind}{%ToggleMute%}
+			if (!PlayerPaused)
+				Send {Blind}{%TogglePause%}
+			GuiControl,-c +cGreen,OnOff
+			GuiControl,Text,OnOff,ON
+		}
+
+		sleep 100
+		Gui,Submit,NoHide
+		; RadioStatus values: 2 when radio playing, 1/6 during switching?,  7 when not (inluding mission pass)
+		; both MenuStatus and ReplayStatus are a 1/0 (1 if on, 0 if off)
+	}
 	
 	; Mutes/unpauses upon closing the game if it isn't already so it's primed for game restarts
 	if (!WinExist(game)) {
