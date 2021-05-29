@@ -573,13 +573,13 @@ GuiControl,Show,OnOff
 ; Actual program
 While (StartProg) {
 	Gui,Submit,NoHide
-        if (MusicPlayer = "Spotify") {
-	        While (SpotifyActions > 20)
-	        {
-		        SpotifyActions := 0
-		        Gosub, RefreshAccessToken
-	        }
-        }
+    if (MusicPlayer = "Spotify") {
+	    While (SpotifyActions > 20)
+	    {
+	        SpotifyActions := 0
+	        Gosub, RefreshAccessToken
+	    }
+    }
 	sleep 1500 ; so it's not wasting CPU while a game isn't even open
 	; determine game version
 	if (WinExist(gta3) && !WinExist(vc)) { ; GTA III
