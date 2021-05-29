@@ -62,7 +62,7 @@ MusicAudible = 1 ; start with your player unmuted
 PlayerPaused = 0 ; start with player unpaused/playing
 WinampVolume := 0 ; httpQ doesn't have a mute/unmute toggle like beefweb so need to get current volume level first and store it for later (also updated on every mute just in case)
 SpotifyVolume := 0 ; no mute/unmute toggle like beefweb, so going the winamp route 
-SpotifyTokenRefreshTimestamp := 0 ; used for token refreshing
+SpotifyActions := 0 ; used for token refreshing
 ; III
 IIIMenuValues := [50629, 197]
 IIIMuteValues := [2827, 3084, 11, 12, 93, 116061, 453]
@@ -374,6 +374,7 @@ MuteHTTP:
 			SpotifyVolume := CurrentVolume
 		}
 		SpotifyAPI.Player.SetVolume(0)
+		SpotifyActions++
 	}
 	return
 UnmuteHTTP:
@@ -396,6 +397,7 @@ UnmuteHTTP:
 	else if (MusicPlayer = "Spotify")
 	{
 		SpotifyAPI.Player.SetVolume(SpotifyVolume)
+		SpotifyActions++
 	}
 	return	
 TogglePauseHTTP:
@@ -418,6 +420,7 @@ TogglePauseHTTP:
 	else if (MusicPlayer = "Spotify")
 	{
 		SpotifyAPI.Player.PlayPause()
+		SpotifyActions++
 	}
 	return
 WinampSettingsShow:
@@ -571,9 +574,9 @@ GuiControl,Show,OnOff
 While (StartProg) {
 	Gui,Submit,NoHide
         if (MusicPlayer = "Spotify") {
-	        While ((A_TickCount - SpotifyTokenRefreshTimestamp) / 1000 > 3000) ; 50min
+	        While (SpotifyActions > 20)
 	        {
-		        SpotifyTokenRefreshTimestamp := A_TickCount
+		        SpotifyActions := 0
 		        Gosub, RefreshAccessToken
 	        }
         }
