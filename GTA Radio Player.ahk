@@ -314,10 +314,6 @@ SetSpotifyPlayer:
 	Menu, MusicPlayerMenu, Uncheck, Winamp
 	Menu, MusicPlayerMenu, Check, Spotify
 	Menu, MusicPlayerMenu, Uncheck, foobar2000
-	return		
-RefreshAccessToken:
-	RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
-	SpotifyAPI.Util.RefreshTempToken(RefreshToken)
 	return	
 ToggleDisableProg:
 	if (Disabled) {
@@ -573,13 +569,6 @@ GuiControl,Show,OnOff
 ; Actual program
 While (StartProg) {
 	Gui,Submit,NoHide
-    if (MusicPlayer = "Spotify") {
-	    While (SpotifyActions > 20)
-	    {
-	        SpotifyActions := 0
-	        Gosub, RefreshAccessToken
-	    }
-    }
 	sleep 1500 ; so it's not wasting CPU while a game isn't even open
 	; determine game version
 	if (WinExist(gta3) && !WinExist(vc)) { ; GTA III
@@ -661,7 +650,13 @@ While (StartProg) {
 		RadioStatus := ReadMemory(RadioAddr, gta3)
 		ReplayStatus := ReadMemory(ReplayAddr, gta3)
 		;DialogueStatus := ReadMemory(DialogueAddr, gta3)
-		
+		While (SpotifyActions > 20)
+		{
+	    	SpotifyActions := 0
+			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
+			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
+		}
+
 		if (IIIMenuValues.includes(RadioStatus)) { ; menu
 			if (MusicAudible) { ; mute in menu
 				if (MuteMethod = "Classic Keybinds")
@@ -801,7 +796,13 @@ While (StartProg) {
 	While (WinExist(gta3) && WinExist(vc) && StartProg && RadioAddr) { 
 		RadioStatus := ReadMemory(RadioAddr, gta3)
 		ReplayStatus := ReadMemory(ReplayAddr, gta3)
-		
+		While (SpotifyActions > 20)
+		{
+	    	SpotifyActions := 0
+			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
+			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
+		}
+
 		if (RadioStatus = 1225) { ; menu or replay
 			if (MusicAudible) { ; mute in menu
 				if (MuteMethod = "Classic Keybinds")
@@ -899,6 +900,12 @@ While (StartProg) {
 		RadioStatus := ReadMemory(RadioAddr, sa)
 		ReplayStatus := ReadMemory(ReplayAddr, sa)
 		MenuStatus := ReadMemory(MenuAddr, sa)
+		While (SpotifyActions > 20)
+		{
+	    	SpotifyActions := 0
+			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
+			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
+		}
 
 		if (RadioStatus = 2 && MenuStatus = 0 && !MusicAudible && WinExist(sa)) ; play music in vehicle
 		{
