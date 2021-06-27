@@ -62,7 +62,7 @@ MusicAudible = 1 ; start with your player unmuted
 PlayerPaused = 0 ; start with player unpaused/playing
 WinampVolume := 0 ; httpQ doesn't have a mute/unmute toggle like beefweb so need to get current volume level first and store it for later (also updated on every mute just in case)
 SpotifyVolume := 0 ; no mute/unmute toggle like beefweb, so going the winamp route 
-SpotifyTokenRefreshTimestamp := 0 ; used for token refreshing
+SpotifyActions := 0 ; used for token refreshing
 ; III
 IIIMenuValues := [50629, 197]
 IIIMuteValues := [2827, 3084, 11, 12, 93, 116061, 453]
@@ -314,10 +314,6 @@ SetSpotifyPlayer:
 	Menu, MusicPlayerMenu, Uncheck, Winamp
 	Menu, MusicPlayerMenu, Check, Spotify
 	Menu, MusicPlayerMenu, Uncheck, foobar2000
-	return		
-RefreshAccessToken:
-	RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
-	SpotifyAPI.Util.RefreshTempToken(RefreshToken)
 	return	
 ToggleDisableProg:
 	if (Disabled) {
@@ -374,6 +370,7 @@ MuteHTTP:
 			SpotifyVolume := CurrentVolume
 		}
 		SpotifyAPI.Player.SetVolume(0)
+		SpotifyActions++
 	}
 	return
 UnmuteHTTP:
@@ -396,6 +393,7 @@ UnmuteHTTP:
 	else if (MusicPlayer = "Spotify")
 	{
 		SpotifyAPI.Player.SetVolume(SpotifyVolume)
+		SpotifyActions++
 	}
 	return	
 TogglePauseHTTP:
@@ -418,6 +416,7 @@ TogglePauseHTTP:
 	else if (MusicPlayer = "Spotify")
 	{
 		SpotifyAPI.Player.PlayPause()
+		SpotifyActions++
 	}
 	return
 WinampSettingsShow:
@@ -570,13 +569,6 @@ GuiControl,Show,OnOff
 ; Actual program
 While (StartProg) {
 	Gui,Submit,NoHide
-        if (MusicPlayer = "Spotify") {
-	        While ((A_TickCount - SpotifyTokenRefreshTimestamp) / 1000 > 3000) ; 50min
-	        {
-		        SpotifyTokenRefreshTimestamp := A_TickCount
-		        Gosub, RefreshAccessToken
-	        }
-        }
 	sleep 1500 ; so it's not wasting CPU while a game isn't even open
 	; determine game version
 	if (WinExist(gta3) && !WinExist(vc)) { ; GTA III
@@ -658,7 +650,13 @@ While (StartProg) {
 		RadioStatus := ReadMemory(RadioAddr, gta3)
 		ReplayStatus := ReadMemory(ReplayAddr, gta3)
 		;DialogueStatus := ReadMemory(DialogueAddr, gta3)
-		
+		While (SpotifyActions > 20)
+		{
+	    	SpotifyActions := 0
+			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
+			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
+		}
+
 		if (IIIMenuValues.includes(RadioStatus)) { ; menu
 			if (MusicAudible) { ; mute in menu
 				if (MuteMethod = "Classic Keybinds")
@@ -798,7 +796,13 @@ While (StartProg) {
 	While (WinExist(gta3) && WinExist(vc) && StartProg && RadioAddr) { 
 		RadioStatus := ReadMemory(RadioAddr, gta3)
 		ReplayStatus := ReadMemory(ReplayAddr, gta3)
-		
+		While (SpotifyActions > 20)
+		{
+	    	SpotifyActions := 0
+			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
+			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
+		}
+
 		if (RadioStatus = 1225) { ; menu or replay
 			if (MusicAudible) { ; mute in menu
 				if (MuteMethod = "Classic Keybinds")
@@ -896,6 +900,12 @@ While (StartProg) {
 		RadioStatus := ReadMemory(RadioAddr, sa)
 		ReplayStatus := ReadMemory(ReplayAddr, sa)
 		MenuStatus := ReadMemory(MenuAddr, sa)
+		While (SpotifyActions > 20)
+		{
+	    	SpotifyActions := 0
+			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
+			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
+		}
 
 		if (RadioStatus = 2 && MenuStatus = 0 && !MusicAudible && WinExist(sa)) ; play music in vehicle
 		{
