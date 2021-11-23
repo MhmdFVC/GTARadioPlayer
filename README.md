@@ -5,7 +5,7 @@ Inspired as an expanded version of S's [GTA Radio External](https://github.com/l
 Currently only supports GTA III, Vice City (all international releases plus Vice City Japanese) and San Andreas (1.0/1.01 (EU/US), Steam 3.0 and NewSteam R2). I imagine this can be done to support other GTA games as well. Report issues here in GitHub or by @ing me where I can be @ed. (Twitter @srlMhmd, Discord Mhmd_FVC#8760)
 
 ## Download
-[v2](https://github.com/MhmdFVC/GTARadioPlayer/releases/download/v2/GTARadioPlayer-v2.zip) 2022/11/23
+[v2](https://github.com/MhmdFVC/GTARadioPlayer/releases/download/v2/GTARadioPlayer-v2.zip) 2021/11/23
 
 ## Getting Started
 **(! This program currently won't work properly on players without versatile global hotkey support !)** (sorry)
