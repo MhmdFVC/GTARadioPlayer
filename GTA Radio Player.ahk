@@ -1,7 +1,7 @@
 #SingleInstance,force
-#Include Spotify.ahk
-#Include array_base.ahk
-#Include classMemory.ahk
+#Include %A_ScriptDir%\includes\array_base.ahk
+#Include %A_ScriptDir%\includes\classMemory.ahk
+#Include %A_ScriptDir%\includes\Spotify.ahk
 SendMode Input
 OnExit, GuiClose
 
@@ -62,7 +62,6 @@ MusicAudible = 1 ; start with your player unmuted
 PlayerPaused = 0 ; start with player unpaused/playing
 WinampVolume := 0 ; httpQ doesn't have a mute/unmute toggle like beefweb so need to get current volume level first and store it for later (also updated on every mute just in case)
 SpotifyVolume := 0 ; no mute/unmute toggle like beefweb, so going the winamp route 
-SpotifyActions := 0 ; used for token refreshing
 ; III
 IIIMenuValues := [50629, 197]
 IIIMuteValues := [2827, 3084, 11, 12, 93, 116061, 453]
@@ -91,9 +90,8 @@ if (MuteMethod = "HTTP Request")
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		global SpotifyAPI := new Spotify
-		SpotifyTokenRefreshTimestamp := A_TickCount
-		CurrentVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
+		Spotify.Auth()
+		CurrentVolume := Spotify.Player.GetCurrentPlaybackInfo().Device.Volume
 		if (CurrentVolume != 0) {
 			SpotifyVolume := CurrentVolume
 		}
@@ -173,7 +171,7 @@ Gui, Add, DropDownList, x102 y232 w150 h80 vMusicPlayer gUpdate, foobar2000|Wina
 ; Foobar settings GUI setup (didn't find anywhere in the API documentation how to even use the auth details so I'll just comment it all out for now)
 Gui, FoobarSettings:Add, Text, x12 y29 w30 h20 +Right +Center, Port:
 Gui, FoobarSettings:Add, Edit, x42 y29 w70 h20 +Left vFoobarPort, %FoobarPort%
-Gui, FoobarSettings:Add, Button, x144 y169 w80 h20 gSaveFoobarSettings, Save
+Gui, FoobarSettings:Add, Button, x144 y69 w80 h20 gSaveFoobarSettings, Save
 ;Gui, FoobarSettings:Add, Text, x12 y79 w60 h20 , Username:
 ;Gui, FoobarSettings:Add, CheckBox, x12 y49 w180 h30 Checked%FoobarAuthNeeded% vFoobarAuthNeeded, Username and Password needed
 ;Gui, FoobarSettings:Add, Edit, x72 y79 w100 h20 vFoobarUsername, %FoobarUsername%
@@ -280,7 +278,7 @@ SetHTTPMute:
 	if (MusicPlayer = "Spotify")
 	{
 		GuiControl, Disable, SettingsButton
-		global SpotifyAPI := new Spotify
+		Spotify.Auth()
 	}
 	else
 	{
@@ -333,7 +331,7 @@ ShowSettings:
 	}
 	return
 FoobarSettingsShow:
-	Gui, FoobarSettings:Show, h197 w373, foobar2000 Settings
+	Gui, FoobarSettings:Show, h107 w373, foobar2000 Settings
 	return
 FoobarSettingsGuiClose:
 	Gui, FoobarSettings:Hide
@@ -365,12 +363,11 @@ MuteHTTP:
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		CurrentVolume := SpotifyAPI.Player.GetCurrentPlaybackInfo().Device.volume
+		CurrentVolume := Spotify.Player.GetCurrentPlaybackInfo().Device.volume
 		if (CurrentVolume != 0) {
 			SpotifyVolume := CurrentVolume
 		}
-		SpotifyAPI.Player.SetVolume(0)
-		SpotifyActions++
+		Spotify.Player.SetVolume(0)
 	}
 	return
 UnmuteHTTP:
@@ -392,8 +389,7 @@ UnmuteHTTP:
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		SpotifyAPI.Player.SetVolume(SpotifyVolume)
-		SpotifyActions++
+		Spotify.Player.SetVolume(SpotifyVolume)
 	}
 	return	
 TogglePauseHTTP:
@@ -415,8 +411,7 @@ TogglePauseHTTP:
 	}
 	else if (MusicPlayer = "Spotify")
 	{
-		SpotifyAPI.Player.PlayPause()
-		SpotifyActions++
+		Spotify.Player.PlayPause()
 	}
 	return
 WinampSettingsShow:
@@ -438,13 +433,13 @@ SaveWinampSettings:
 	IniWrite, %WinampPort%, config.ini, Winamp, Port
 	return			
 About:
-	MsgBox,,About, Created by Mhmd_FVC and anti`nInspired as a better version of S's external radio program https://github.com/lotsofs/GTA-Radio-External`nMost memory addresses/values are taken from his program`n`nVersion 1 currently only supports GTA III and VC, but support for other games, expanded media player support, and more fine-tuning features may be to come. Feel free to fork and make your own changes.
+	MsgBox,,About, Created by Mhmd_FVC,  anti and hoxi`nInspired as a better version of S's external radio program https://github.com/lotsofs/GTA-Radio-External`nMost memory addresses/values are taken from his program`n`nVersion 2 currently only supports GTA III, VC and SA, but support for other games, expanded media player support, and more fine-tuning features may be to come. Feel free to fork and make your own changes.
 	return
 Miscom3test:
-	SoundPlay, miscom3.wav
+	SoundPlay, %A_ScriptDir%\sounds\miscom3.wav
 	return
 MiscomVcTest:
-	SoundPlay, miscomVC.wav
+	SoundPlay, %A_ScriptDir%\sounds\miscomVC.wav
 	return
 Update:
 	Gui,Submit,NoHide
@@ -472,7 +467,7 @@ Update:
 		if (MusicPlayer = "Spotify")
 		{
 			GuiControl, Disable, SettingsButton
-			global SpotifyAPI := new Spotify
+			Spotify.Auth()
 		}
 		else
 		{
@@ -608,6 +603,10 @@ While (StartProg) {
 			RadioAddr := 0x9829C8
 			ReplayAddr := 0x977DA8
 			GuiControl,Text,Ver,Game: Vice City Steam
+		} else if (ReadMemory(0xA402ED, gta3) = 155652) { ; Steamstub-less
+			RadioAddr := 0x9829C8
+			ReplayAddr := 0x787A18
+			GuiControl,Text,Ver,Game: VC Steamstubless
 		}
 	} else if (WinExist(sa)) { ; San Andreas
 		game := sa
@@ -650,12 +649,6 @@ While (StartProg) {
 		RadioStatus := ReadMemory(RadioAddr, gta3)
 		ReplayStatus := ReadMemory(ReplayAddr, gta3)
 		;DialogueStatus := ReadMemory(DialogueAddr, gta3)
-		While (SpotifyActions > 20)
-		{
-	    	SpotifyActions := 0
-			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
-			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
-		}
 
 		if (IIIMenuValues.includes(RadioStatus)) { ; menu
 			if (MusicAudible) { ; mute in menu
@@ -670,7 +663,7 @@ While (StartProg) {
 				}
 				MusicAudible = 0
 			} if (MissionPassedPlaying) { ; cancel mission passed theme if game paused
-				SoundPlay, yeah.wav
+				SoundPlay, %A_ScriptDir%\sounds\yeah.wav
 				MissionPassedPlaying = 0
 				sleep 100
 			}
@@ -688,7 +681,7 @@ While (StartProg) {
 				MusicAudible = 0
 			}
 			if (IIIMissionPassedValues.includes(RadioStatus) && PlayMissionPassed && !MissionPassedPlaying) { ; mission passed and configured to play theme
-				SoundPlay, miscom3.wav
+				SoundPlay, %A_ScriptDir%\sounds\miscom3.wav
 				MissionPassedPlaying = 1
 			}
 		} else if (((RadioStatus >= 0 && RadioStatus <= 10) || IIIUnmuteValues.includes(RadioStatus)) && WinExist(gta3) && !MusicAudible) { ; play music in vehicle 
@@ -796,12 +789,6 @@ While (StartProg) {
 	While (WinExist(gta3) && WinExist(vc) && StartProg && RadioAddr) { 
 		RadioStatus := ReadMemory(RadioAddr, gta3)
 		ReplayStatus := ReadMemory(ReplayAddr, gta3)
-		While (SpotifyActions > 20)
-		{
-	    	SpotifyActions := 0
-			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
-			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
-		}
 
 		if (RadioStatus = 1225) { ; menu or replay
 			if (MusicAudible) { ; mute in menu
@@ -817,11 +804,11 @@ While (StartProg) {
 				MusicAudible = 0
 			}
 			if (MissionPassedPlaying) { ; cancel mission passed theme if game paused
-				SoundPlay, yeah.wav
+				SoundPlay, %A_ScriptDir%\sounds\yeah.wav
 				MissionPassedPlaying = 0
 			}
 		} else if (RadioStatus = 101 && PlayMissionPassed && !MissionPassedPlaying) { ; mission passed stuff
-			SoundPlay, miscomVC.wav
+			SoundPlay, %A_ScriptDir%\sounds\miscom3.wav
 			MissionPassedPlaying = 1
 		; on foot or in north point mall or riot crowd (on foot) or vercetti mansion (on foot) 
 		} else if (RadioStatus != 101 && MissionPassedPlaying) ; reset missionpassedplaying var if it's done playing
@@ -900,12 +887,6 @@ While (StartProg) {
 		RadioStatus := ReadMemory(RadioAddr, sa)
 		ReplayStatus := ReadMemory(ReplayAddr, sa)
 		MenuStatus := ReadMemory(MenuAddr, sa)
-		While (SpotifyActions > 20)
-		{
-	    	SpotifyActions := 0
-			RegRead, RefreshToken, % SpotifyAPI.Util.RefreshLoc, refreshToken ; refresh token is stored in registry, so just read it from there
-			SpotifyAPI.Util.RefreshTempToken(RefreshToken)
-		}
 
 		if (RadioStatus = 2 && MenuStatus = 0 && !MusicAudible && WinExist(sa)) ; play music in vehicle
 		{
