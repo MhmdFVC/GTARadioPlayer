@@ -103,7 +103,7 @@ if (MuteMethod = "HTTP Request")
 gta3 := "ahk_class Grand theft auto 3" ; also used for VC
 vc := "GTA: Vice City" ; to distinguish from gta3
 sa := "GTA: San Andreas"
-game := gta3 ; default (no SA support yet and saves one line of code anyway)
+game := gta3 ; default 
 ;d1 := ""
 
 RadioAddr := 0x0
@@ -564,7 +564,7 @@ GuiControl,Show,OnOff
 ; Actual program
 While (StartProg) {
 	Gui,Submit,NoHide
-	sleep 1500 ; so it's not wasting CPU while a game isn't even open
+	Sleep 500 ; so it's not wasting CPU while a game isn't even open
 	; determine game version
 	if (WinExist(gta3) && !WinExist(vc)) { ; GTA III
 		if (ReadMemory(0x5C1E70, gta3) = 1407551829) { ; Retail 1.0
@@ -655,7 +655,6 @@ While (StartProg) {
 				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%ToggleMute%}
-					
 				}
 				else if (MuteMethod = "HTTP Request")
 				{
@@ -672,7 +671,6 @@ While (StartProg) {
 				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%ToggleMute%}
-					
 				}
 				else if (MuteMethod = "HTTP Request")
 				{
@@ -710,7 +708,6 @@ While (StartProg) {
 			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%TogglePause%}
-				
 			}
 			else if (MuteMethod = "HTTP Request")
 			{
@@ -732,54 +729,26 @@ While (StartProg) {
 		if (Disabled) {
 			GuiControl,-c +cRed,OnOff
 			GuiControl,Text,OnOff,OFF
-			if (MusicAudible)
-				if (MuteMethod = "Classic Keybinds")
-				{
+			if (MuteMethod = "Classic Keybinds") {
+				if (MusicAudible)
 					Send {Blind}{%ToggleMute%}
-					
-				}
-				else if (MuteMethod = "HTTP Request")
-				{
-					Gosub, MuteHTTP
-				}
-			if (!PlayerPaused)
-				if (MuteMethod = "Classic Keybinds")
-				{
-					Send {Blind}{%TogglePause%}
-					
-				}
-				else if (MuteMethod = "HTTP Request")
-				{
-					Gosub, TogglePauseHTTP
-				}
-			While (Disabled && StartProg)
-				sleep 100
-			if (MusicAudible)
-				if (MuteMethod = "Classic Keybinds")
-				{
-					Send {Blind}{%ToggleMute%}
-					
-				}
-				else if (MuteMethod = "HTTP Request")
-				{
-					Gosub, MuteHTTP
-				}
-			if (!PlayerPaused)
-				if (MuteMethod = "Classic Keybinds")
-				{
-					Send {Blind}{%TogglePause%}
-					
-				}
-				else if (MuteMethod = "HTTP Request")
-				{
-					Gosub, TogglePauseHTTP
-				}
+				MusicAudible = 0
+				while (Disabled && StartProg)
+					Sleep 80
+			}
+			else if (MuteMethod = "HTTP Request") {
+				if (MusicAudible)
+					Gosub, MuteHTTP 
+				MusicAudible = 0
+				while (Disabled && StartProg)
+					Sleep 80
+			}
 			GuiControl,-c +cGreen,OnOff
 			GuiControl,Text,OnOff,ON
 		}
 		
 		Gui,Submit,NoHide
-		sleep 100
+		Sleep 80
 		; RadioStatus values
 		; 0-9=normal vehicles, 10=police, 11/12=on foot,  93 = mission passed (1.1), 197=menu, 453 = mission passed (steam)
 		; for some reason the retail should-be values have the binary duplicated and tacked on (10 [00001010] -> 2570 [0000101000001010])
@@ -795,7 +764,6 @@ While (StartProg) {
 				if (MuteMethod = "Classic Keybinds")
 				{
 					Send {Blind}{%ToggleMute%}
-					
 				}
 				else if (MuteMethod = "HTTP Request")
 				{
@@ -827,7 +795,6 @@ While (StartProg) {
 			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%ToggleMute%}
-				
 			}
 			else if (MuteMethod = "HTTP Request")
 			{
@@ -861,22 +828,26 @@ While (StartProg) {
 		if (Disabled) {
 			GuiControl,-c +cRed,OnOff
 			GuiControl,Text,OnOff,OFF
-			if (MusicAudible)
-				Send {Blind}{%ToggleMute%}
-			if (!PlayerPaused)
-				Send {Blind}{%TogglePause%}
-			While (Disabled && StartProg)
-				sleep 100
-			if (MusicAudible)
-				Send {Blind}{%ToggleMute%}
-			if (!PlayerPaused)
-				Send {Blind}{%TogglePause%}
+			if (MuteMethod = "Classic Keybinds") {
+				if (MusicAudible)
+					Send {Blind}{%ToggleMute%}
+				MusicAudible = 0
+				while (Disabled && StartProg)
+					Sleep 80
+			}
+			else if (MuteMethod = "HTTP Request") {
+				if (MusicAudible)
+					Gosub, MuteHTTP 
+				MusicAudible = 0
+				while (Disabled && StartProg)
+					Sleep 80
+			}
 			GuiControl,-c +cGreen,OnOff
 			GuiControl,Text,OnOff,ON
 		}
 		
 		Gui,Submit,NoHide
-		sleep 100
+		Sleep 80
 		; RadioStatus values
 		; 0-9: various normal vehicles, 10/11: on foot, 19: in ocean view hotel, 21: riot crowd, 23: emergency vehicle
 		; 24: post-cabmaggedon kaufman cab, 25/26: hurricane warnings, 70-??: cutscene stuff, 101: mission passed, 1225: menu
@@ -893,7 +864,6 @@ While (StartProg) {
 			if (MuteMethod = "Classic Keybinds")
 			{
 				Send {Blind}{%ToggleMute%}
-				
 			}
 			else if (MuteMethod = "HTTP Request")
 			{
@@ -951,21 +921,25 @@ While (StartProg) {
 		if (Disabled) {
 			GuiControl,-c +cRed,OnOff
 			GuiControl,Text,OnOff,OFF
-			if (MusicAudible)
-				Send {Blind}{%ToggleMute%}
-			if (!PlayerPaused)
-				Send {Blind}{%TogglePause%}
-			While (Disabled && StartProg)
-				sleep 100
-			if (MusicAudible)
-				Send {Blind}{%ToggleMute%}
-			if (!PlayerPaused)
-				Send {Blind}{%TogglePause%}
+			if (MuteMethod = "Classic Keybinds") {
+				if (MusicAudible)
+					Send {Blind}{%ToggleMute%}
+				MusicAudible = 0
+				while (Disabled && StartProg)
+					Sleep 80
+			}
+			else if (MuteMethod = "HTTP Request") {
+				if (MusicAudible)
+					Gosub, MuteHTTP 
+				MusicAudible = 0
+				while (Disabled && StartProg)
+					Sleep 80
+			}
 			GuiControl,-c +cGreen,OnOff
 			GuiControl,Text,OnOff,ON
 		}
 
-		sleep 100
+		Sleep 80
 		Gui,Submit,NoHide
 		; RadioStatus values: 2 when radio playing, 1/6 during switching?,  7 when not (inluding mission pass)
 		; both MenuStatus and ReplayStatus are a 1/0 (1 if on, 0 if off)
@@ -974,7 +948,11 @@ While (StartProg) {
 	; Mutes/unpauses upon closing the game if it isn't already so it's primed for game restarts
 	if (!WinExist(game)) {
 		if (!MusicAudible) {
-			Send {Blind}{%ToggleMute%}
+			if (MuteMethod = "Classic Keybinds")
+				Send {Blind}{%ToggleMute%}
+			else if (MuteMethod = "HTTP Request")
+				Gosub, UnmuteHTTP
+				
 			MusicAudible = 1
 		} else if (PlayerPaused) {
 			if (MuteMethod = "Classic Keybinds")
@@ -1029,12 +1007,20 @@ else if (MuteMethod = "HTTP Request")
 GuiControl,Hide,OnOff
 GuiControl,Text,Ver,Game:
 IniWrite, %StartProg%, config.ini, Behavior, StartProg
+
+; Resumes audible playback upon turning off program loop
 if (!MusicAudible) {
-	Send {Blind}{%ToggleMute%}
+	if (MuteMethod = "Classic Keybinds") 
+		Send {Blind}{%ToggleMute%}
+	else if (MuteMethod = "HTTP Request")
+		Gosub, UnmuteHTTP
 	MusicAudible = 1
 }
 if (PlayerPaused) {
-	Send {Blind}{%TogglePause%}
+	if (MuteMethod = "Classic Keybinds")
+		Send {Blind}{%TogglePause%}
+	else if (MuteMethod = "HTTP Request")
+		Gosub, TogglePauseHTTP
 	PlayerPaused = 0
 }
 return
